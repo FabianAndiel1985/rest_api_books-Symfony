@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Entity\Book;
+use App\Service\UpdateProduct;
 
 
 #[Route('/books', name: 'books_')]
@@ -29,7 +30,6 @@ class BookController extends AbstractController
       $DBmanager = $doctrine->getManager();
 
        $request = Request::createFromGlobals();
-       #request = Request::create('/hello-world','GET', [], [],[], [], $content );
        $requestContent = json_decode($request->getContent()); 
         
        $book = new Book();
@@ -57,76 +57,52 @@ class BookController extends AbstractController
 
         $book= $doctrine->getRepository(Book::class)->find($id);
 
+        if(!$book) {
+            return $this->json(
+                "There is no book with the id {$id} to delete",
+                headers: ['Content-Type' => 'application/json;charset=UTF-8']
+            );    
+        }
+
         $entityManager = $doctrine->getManager();
 
         $entityManager->remove($book);
         $entityManager->flush();
 
         return $this->json(
-            "The book with the {$id} has been deleted"
+            "The book with the {$id} has been deleted",
+            headers: ['Content-Type' => 'application/json;charset=UTF-8']
         );
     }
 
-
-    #[Route('/update/{id}', name: 'app_book_update', methods:["PUT","GET"],requirements: ['id' => '\d+'])]
-    public function update(int $id, ManagerRegistry $doctrine): JsonResponse
+    #[Route('/update/{id}', name: 'app_book_update', methods:["PUT"],requirements: ['id' => '\d+'])]
+    public function update(int $id, ManagerRegistry $doctrine, UpdateProduct $updateProduct): JsonResponse
     {
 
         $book= $doctrine->getRepository(Book::class)->find($id);
 
-        #$request = Request::createFromGlobals();
+        $request = Request::createFromGlobals();
 
-        // Mock content with std class
-
-        $content = new \stdClass;
-        $content->title='Coaching nach Fabian Andiel';
-        $content->description='In seinem neuem Meisterwerk Fabian Andiel ist es ihm gelungen, alles zu ergründen.';
-        $content->author='';
-        $content->isbn='';
-
-        $content= json_encode($content);
-
-        $request = Request::create('/hello-world','GET', [], [],[], [], $content );
+        if(!$book) {
+            return $this->json(
+                "There is no book with the id {$id} to update",
+                headers: ['Content-Type' => 'application/json;charset=UTF-8']
+            );    
+        }
 
         $requestContent = json_decode($request->getContent()); 
         
-    //    $book = new Book();
-    //    $book->setTitle($requestContent->title);
-    //    $book->setDescription($requestContent->description);
-    //    $book->setAuthor($requestContent->author);
-    //    $book->setIsbn($requestContent->isbn);
-    //    $book->setPrice($requestContent->price);
-    //    $book->setAvailable($requestContent->available);
+        $updatedBook =  $updateProduct->updateObjectValues($requestContent, $book);
 
+        $entityManager = $doctrine->getManager();
 
+        $entityManager->persist($updatedBook);
 
-        //ToDo: createOwnService in Symphony: check for keyname and when value is not empty substitute it in the object then return the object
-        //have a look at documentation
-        var_dump($requestContent); 
-
-        $foo = (array) $book;
-
-        print_r($foo);
-    
-    foreach($requestContent as $key => $value) {
-        #print "$key => $value\n";
-        if(!empty($value)){
-            
-            
-        }
-    }
-    
-
-        //persist the updated book here ==================
-        // $entityManager = $doctrine->getManager();
-
-        // $entityManager->persist($book);
-        // $entityManager->flush();
-
-        //==============================================
+        $entityManager->flush();
 
         return $this->json(
-            "The book with the {$id} has been updated"
+            "The book with the id {$id} has been updated",
+            headers: ['Content-Type' => 'application/json;charset=UTF-8']
         );
     }
 
@@ -136,17 +112,24 @@ class BookController extends AbstractController
     public function all(ManagerRegistry $doctrine ): JsonResponse
     {
 
-       $products = $doctrine->getRepository(Book::class)->findAll();
+       $books = $doctrine->getRepository(Book::class)->findAll();
 
-       foreach ($products as $product) {
+       if(!$books) {
+        return $this->json(
+            "There seems to be no data in the database",
+            headers: ['Content-Type' => 'application/json;charset=UTF-8']
+        );
+       }
+
+       foreach ($books as $book) {
         $data[] = [
-            'id' => $product->getId(),
-            'name' => $product->getTitle(),
-            'description' => $product->getDescription(),
-            'author' => $product->getAuthor(),
-            'isbn' => $product->getIsbn(),
-            'price'=> $product->getPrice(),
-            'available'=>$product->isAvailable()
+            'id' => $book->getId(),
+            'name' => $book->getTitle(),
+            'description' => $book->getDescription(),
+            'author' => $book->getAuthor(),
+            'isbn' => $book->getIsbn(),
+            'price'=> $book->getPrice(),
+            'available'=>$book->isAvailable()
         ];
      }
 
@@ -155,10 +138,6 @@ class BookController extends AbstractController
             headers: ['Content-Type' => 'application/json;charset=UTF-8']
         );
     }
-
-
-
-    
 }
 
 
