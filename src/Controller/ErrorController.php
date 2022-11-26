@@ -10,6 +10,6 @@ class ErrorController
 {
     public function show(Throwable $exception)
      {
-         return new JsonResponse("smth went wrong");
+        return new JsonResponse("smth went wrong");
      }
 }
