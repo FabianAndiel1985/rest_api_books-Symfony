@@ -50,8 +50,8 @@ class BookController extends AbstractController
     
         $errorsString = (string) $errors;
         
-        // get non valid fields
         preg_match_all('/\.(.*?):/', $errorsString, $result);
+        
         $nonValidFields= $result[1];
         
         $nonValidFieldsText = "";
@@ -70,8 +70,8 @@ class BookController extends AbstractController
         );
     }
 
-    //    $DBmanager->persist($book);
-    //    $DBmanager->flush();
+       $DBmanager->persist($book);
+       $DBmanager->flush();
 
        $title= $requestContent->title;
 

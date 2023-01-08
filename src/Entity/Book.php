@@ -20,6 +20,7 @@ class Book
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
     private ?string $description = null;
 
     #[ORM\Column(length: 255)]
@@ -27,12 +28,17 @@ class Book
     private ?string $author = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank]
+    #[Assert\Positive]
     private ?int $isbn = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank]
+    #[Assert\Positive]
     private ?float $price = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank]
     private ?bool $available = null;
 
     public function getId(): ?int
