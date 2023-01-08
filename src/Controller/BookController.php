@@ -1,5 +1,5 @@
 <?php
-
+//Probably needs validator for the request!!!!
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -9,6 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Entity\Book;
 use App\Service\UpdateProduct;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 #[Route('/books', name: 'books_')]
@@ -24,13 +25,15 @@ class BookController extends AbstractController
         );
     }
 
+    //insufficient cause strange post requse error
     #[Route('/new', name: 'app_book', methods:["POST"])]
-    public function new(ManagerRegistry $doctrine ): JsonResponse
+    public function new(ManagerRegistry $doctrine, ValidatorInterface $validator): JsonResponse
     {
       $DBmanager = $doctrine->getManager();
 
        $request = Request::createFromGlobals();
        $requestContent = json_decode($request->getContent()); 
+       
         
        $book = new Book();
        $book->setTitle($requestContent->title);
@@ -40,17 +43,44 @@ class BookController extends AbstractController
        $book->setPrice($requestContent->price);
        $book->setAvailable($requestContent->available);
 
-       $DBmanager->persist($book);
-       $DBmanager->flush();
+       $errors = $validator->validate($book);
+
+
+    if (count($errors) > 0) {
+    
+        $errorsString = (string) $errors;
+        
+        // get non valid fields
+        preg_match_all('/\.(.*?):/', $errorsString, $result);
+        $nonValidFields= $result[1];
+        
+        $nonValidFieldsText = "";
+
+        foreach ($nonValidFields as $key=> $value) {
+            if($key+1 == count($nonValidFields)) {
+                $nonValidFieldsText .= "$value";
+            }
+            else {
+            $nonValidFieldsText .= "$value, ";
+            }
+          }
+
+        return $this->json(
+            "The following fields are invalid: ".$nonValidFieldsText 
+        );
+    }
+
+    //    $DBmanager->persist($book);
+    //    $DBmanager->flush();
 
        $title= $requestContent->title;
 
         return $this->json(
-            "The product {$title} was saved in the DB"
+            "The product {$errors} was saved in the DB"
         );
     }
   
-
+    // tested on 08.01.2023 fully sufficient
     #[Route('/delete/{id}', name: 'app_book_delete', methods:["DELETE"],requirements: ['id' => '\d+'])]
     public function delete(int $id, ManagerRegistry $doctrine): JsonResponse
     {
@@ -75,7 +105,8 @@ class BookController extends AbstractController
         );
     }
 
-    #[Route('/update/{id}', name: 'app_book_update', methods:["PUT"],requirements: ['id' => '\d+'])]
+    // tested on 08.01.2023 fully sufficient
+    #[Route('/update/{id}', name: 'app_book_update', methods:["PATCH"],requirements: ['id' => '\d+'])]
     public function update(int $id, ManagerRegistry $doctrine, UpdateProduct $updateProduct): JsonResponse
     {
 
@@ -107,7 +138,7 @@ class BookController extends AbstractController
     }
 
 
-
+    // tested on 08.01.2023 fully sufficient
     #[Route('/all', name: 'app_book_all', methods:["GET"])]
     public function all(ManagerRegistry $doctrine ): JsonResponse
     {

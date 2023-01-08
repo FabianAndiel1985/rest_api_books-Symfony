@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\BookRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 class Book
@@ -14,12 +16,14 @@ class Book
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
     private ?string $description = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
     private ?string $author = null;
 
     #[ORM\Column]
