@@ -21,11 +21,10 @@ class BookController extends AbstractController
     {
 
         return $this->json(
-            "Welcome to index page"
+            "Welcome to books rest api"
         );
     }
 
-    //insufficient cause strange post requse error
     #[Route('/new', name: 'app_book', methods:["POST"])]
     public function new(ManagerRegistry $doctrine, ValidatorInterface $validator): JsonResponse
     {
@@ -44,7 +43,6 @@ class BookController extends AbstractController
        $book->setAvailable($requestContent->available);
 
        $errors = $validator->validate($book);
-
 
     if (count($errors) > 0) {
     
@@ -70,17 +68,16 @@ class BookController extends AbstractController
         );
     }
 
-       $DBmanager->persist($book);
-       $DBmanager->flush();
+        $DBmanager->persist($book);
+        $DBmanager->flush();
 
        $title= $requestContent->title;
 
         return $this->json(
-            "The product {$errors} was saved in the DB"
+            "The product the book titled '{$title}' was saved in the DB"
         );
     }
   
-    // tested on 08.01.2023 fully sufficient
     #[Route('/delete/{id}', name: 'app_book_delete', methods:["DELETE"],requirements: ['id' => '\d+'])]
     public function delete(int $id, ManagerRegistry $doctrine): JsonResponse
     {
@@ -100,12 +97,12 @@ class BookController extends AbstractController
         $entityManager->flush();
 
         return $this->json(
-            "The book with the {$id} has been deleted",
+            "The book with the id {$id} has been deleted",
             headers: ['Content-Type' => 'application/json;charset=UTF-8']
         );
     }
 
-    // tested on 08.01.2023 fully sufficient
+    
     #[Route('/update/{id}', name: 'app_book_update', methods:["PATCH"],requirements: ['id' => '\d+'])]
     public function update(int $id, ManagerRegistry $doctrine, UpdateProduct $updateProduct): JsonResponse
     {
@@ -138,7 +135,6 @@ class BookController extends AbstractController
     }
 
 
-    // tested on 08.01.2023 fully sufficient
     #[Route('/all', name: 'app_book_all', methods:["GET"])]
     public function all(ManagerRegistry $doctrine ): JsonResponse
     {
@@ -153,16 +149,19 @@ class BookController extends AbstractController
        }
 
        foreach ($books as $book) {
+        $roundedPrice = round($book->getPrice(),2,PHP_ROUND_HALF_UP);
+        
         $data[] = [
             'id' => $book->getId(),
             'name' => $book->getTitle(),
             'description' => $book->getDescription(),
             'author' => $book->getAuthor(),
             'isbn' => $book->getIsbn(),
-            'price'=> $book->getPrice(),
+            'price'=> number_format((float)$book->getPrice(), 2, '.', ''),
             'available'=>$book->isAvailable()
         ];
      }
+   
 
         return $this->json(
             $data,

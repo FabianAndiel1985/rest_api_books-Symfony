@@ -10,7 +10,7 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ErrorController
 {
-    public function show(HttpExceptionInterface $exception)
+    public function show( $exception)
      {
         return new JsonResponse([
             "httpErrorCode"=>$exception->getStatusCode(), 
